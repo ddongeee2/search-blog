@@ -1,0 +1,90 @@
+## ======================================
+## Embedded Tomcat Server Properties
+## * Ref. https://docs.spring.io/spring-boot/docs/2.6.4/reference/htmlsingle/#application-properties.server
+## ======================================
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: "/"
+    encoding:
+      charset: "UTF-8"
+      enabled: true
+      force: true
+  tomcat:
+    accept-count: ${SERVER_ACCEPT_COUNT:100}
+    connection-timeout: ${SERVER_CONNECTION_TIMEOUT:20000}
+    max-connections: ${SERVER_MAC_CONNECTION:8192}
+    threads:
+      max: ${SERVER_TRHEAD_MAX:200}
+      min-spare: ${SERVER_TRHEAD_MIN:10}
+
+## ======================================
+## DATASOURCE & JPA
+## * Ref. maximum-pool-size > https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing#connections--core_count--2--effective_spindle_count
+## ======================================
+spring:
+  application:
+    name: ${APP_NAME:searchblogapp}
+  datasource:
+    driver-class-name: "${DB_DRIVER_CLASS_NAME:org.h2.Driver}"
+    url: "jdbc:${DB_ENGINE:h2}:~/test"
+    username: "${DB_USERNAME:admin}"
+    password: "${DB_PASSWORD:h2}"
+    connectionTestQuery: "SELECT 1"
+    maximumPoolSize: ${DB_MAX_POOL_SIZE:50}
+    minimumIdle: ${DB_MIN_IDLE:50}
+  h2:
+    console:
+      enable: true
+      path: /h2-console
+  jpa:
+    database: "${DB_ENGINE:h2}"
+    hibernate:
+      ddl-auto: validate # create disabled: schema has been managed by flyway on docker-compose
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyJpaImpl
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        default_schema: "${DB_DEFAULT_SCHEMA:test}"
+        dialect: org.hibernate.dialect.H2Dialect
+        hbm2ddl:
+          import_files_sql_extractor: org.hibernate.tool.hbm2ddl.MultipleLinesSqlCommandExtractor
+        format_sql: false
+        show-sql: false
+        use_sql_comments: true
+        use_jdbc_metadata_defaults: true
+
+## ======================================
+## Spring Actuator
+## * Ref. Production-ready Features > https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html
+## ======================================
+management:
+  server:
+    port: ${ACTUATOR_PORT:38080}
+  health:
+    defaults:
+      enabled: false
+    db:
+      enabled: true
+    livenessState:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+      group:
+        liveness:
+          include: "livenessState,db"
+        readiness:
+          show-details: always
+          include: "readinessState,db"
+  metrics:
+    enable:
+      jvm: true
+    tags:
+      application: ${spring.application.name}
